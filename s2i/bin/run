@@ -9,18 +9,12 @@ if [ ! "$(ls -A /opt/app-root/wp-content)" ]; then
   echo "-> Installing base Wordpress plugins and themes ..."
   rsync --stats -rlhO ${WP_BASE_DIR}/wp-content-install/* /opt/app-root/wp-content/
 fi
+rm -fr ${WP_BASE_DIR}/wp-content-install
 
-if [ "$(ls -A ${WP_BASE_DIR}/wp-content)" ]; then
-  mv ${WP_BASE_DIR}/wp-content ${WP_BASE_DIR}/.wp-content-git
-  echo "-> Installing provided user content..."
-  for i in $(ls -A1 ${WP_BASE_DIR}/.wp-content-git/); do
-    echo "--> Rsyncing $i"
-    rsync --stats -rlhOdH --itemize-changes --no-times --no-owner --size-only ${WP_BASE_DIR}/.wp-content-git/$i /opt/app-root/wp-content/$i &
-  done
-fi
-
-echo "-> Linking './wp-content' to persistent volume ..."
-ln -sf /opt/app-root/wp-content ${WP_BASE_DIR}/wp-content
+echo "-> Linking './wp-content/uploads' to volume ..."
+mkdir -p /opt/app-root/wp-content/{uploads,blogs.dir}
+ln -sf /opt/app-root/wp-content/uploads ${WP_BASE_DIR}/wp-content/uploads
+ln -sf /opt/app-root/wp-content/blogs.dir ${WP_BASE_DIR}/wp-content/blogs.dir
 
 # Setup defaults
 export WORDPRESS_TABLE_PREFIX=${WORDPRESS_TABLE_PREFIX:-"wp_"}

@@ -2,4 +2,4 @@
 unset BASH_ENV PROMPT_COMMAND ENV
 source scl_source enable rh-nodejs8
 source scl_source enable httpd24
-source scl_source enable rh-php70
+source scl_source enable rh-php71
