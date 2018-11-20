@@ -403,7 +403,7 @@ parameters:
   displayName: Wordpress version
   description: The version of wordpress to use.
   required: true
-  value: 4.9.8-php-7.2
+  value: 4.9.8-php-7.1
 - name: NAMESPACE
   displayName: Namespace
   description: The OpenShift Namespace where the ImageStream resides.

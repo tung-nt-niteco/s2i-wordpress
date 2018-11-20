@@ -18,9 +18,9 @@ for version in ${VERSIONS}; do
     _version=$(echo ${version} | cut -d ":" -f1)
     _short_version=$(echo ${_version//./} | cut -c 1,2 )
     _sha1=$(echo ${version} | cut -d ":" -f2)
-    echo "=== Building Wordpress s2i php 7.2 v${_version}"
-    docker build --rm -f Dockerfile.7.2 --build-arg WORDPRESS_VERSION=${_version} --build-arg WORDPRESS_SHA1=${_sha1} \
-    -t ${NAMESPACE}/${BASE_IMAGE_NAME}-php72-${_short_version}:${_version} \
+    echo "=== Building Wordpress s2i php 7.1 v${_version}"
+    docker build --rm -f Dockerfile.7.1 --build-arg WORDPRESS_VERSION=${_version} --build-arg WORDPRESS_SHA1=${_sha1} \
+    -t ${NAMESPACE}/${BASE_IMAGE_NAME}-php71-${_short_version}:${_version} \
     --label io.bonniernews.wordpress.version="${_version}" \
     --label io.bonniernews.wordpress.build.date="$(date +%c)" \
     --label io.bonniernews.wordpress.build.user="${USER}" .
