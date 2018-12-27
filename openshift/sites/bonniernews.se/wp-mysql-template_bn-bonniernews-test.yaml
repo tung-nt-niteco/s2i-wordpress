@@ -32,6 +32,7 @@ objects:
   stringData:
     database-user: "${DATABASE_USER}"
     database-password: "${DATABASE_PASSWORD}"
+    database-root-password: "r${DATABASE_PASSWORD}"
     wordpress-auth-key: "${WORDPRESS_AUTH_KEY}"
     wordpress-secure-auth-key: "${WORDPRESS_SECURE_AUTH_KEY}"
     wordpress-logged-in-key: "${WORDPRESS_LOGGED_IN_KEY}"
@@ -320,6 +321,9 @@ objects:
     name: "${NAME}-${DATABASE_SERVICE_NAME}"
     annotations:
       description: Exposes the database server
+      service.alpha.openshift.io/dependencies: '[{"name": "${NAME}-${DATABASE_SERVICE_NAME}","kind": "Service"}]'
+      prometheus.io/port: '9104'
+      prometheus.io/scrape: 'true'
   spec:
     ports:
     - name: mysql
@@ -365,6 +369,43 @@ objects:
           persistentVolumeClaim:
             claimName: "${NAME}-${DATABASE_SERVICE_NAME}"
         containers:
+        - name: mysqld-exporter
+          args:
+            -  '--log.level=debug'
+          image: 'prom/mysqld-exporter:v0.11.0'
+          imagePullPolicy: IfNotPresent
+          ports:
+          - containerPort: 9104
+            protocol: TCP
+          resources:
+            limits:
+              memory: 512Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          env:
+          - name: MYSQL_USER
+            valueFrom:
+              secretKeyRef:
+                name: "${NAME}"
+                key: database-user
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: "${NAME}"
+                key: database-password
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: "${NAME}"
+                key: database-root-password
+          - name: MYSQL_DATABASE
+            value: "${DATABASE_NAME}"
+          - name: MYSQL_SERVICE_HOST
+            value: "${NAME}-${DATABASE_SERVICE_NAME}"
+          - name: MYSQL_SERVICE_PORT
+            value: '3306'
+          - name: DATA_SOURCE_NAME
+            value: root:$(MYSQL_ROOT_PASSWORD)@($(MYSQL_SERVICE_HOST):$(MYSQL_SERVICE_PORT))/$(MYSQL_DATABASE)
         - name: mysql
           image: " "
           ports:
@@ -398,6 +439,11 @@ objects:
               secretKeyRef:
                 name: "${NAME}"
                 key: database-password
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: "${NAME}"
+                key: database-root-password
           - name: MYSQL_DATABASE
             value: "${DATABASE_NAME}"
           resources:
