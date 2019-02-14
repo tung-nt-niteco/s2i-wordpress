@@ -1,0 +1,32 @@
+kind: BuildConfig
+apiVersion: v1
+metadata:
+  annotations:
+    description: Build a container and push it to image streams
+  labels:
+    app: wordpress
+  name: dn-reserv-container
+  namespace: dn-reserv-prod
+spec:
+  output:
+    to:
+      kind: DockerImage
+      name: 'docker-registry.default.svc:5000/dn-reserv-prod/wordpress:5.0.3-php-7.0'
+  runPolicy: Serial
+  source:
+    git:
+      ref: master
+      uri: git@github.com:tung-nt-niteco/s2i-wordpress.git
+    sourceSecret:
+      name: deploy-git
+    type: Git
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: 'Dockerfile.7.0'
+      buildArgs:
+        - name: 'WORDPRESS_VERSION'
+          value: '5.0.3'
+        - name: 'WORDPRESS_SHA1'
+          value: 'f9a4b482288b5be7a71e9f3dc9b5b0c1f881102b'
+  triggers: []
