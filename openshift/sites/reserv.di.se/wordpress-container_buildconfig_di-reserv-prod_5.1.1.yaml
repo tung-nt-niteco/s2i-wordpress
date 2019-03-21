@@ -11,11 +11,11 @@ spec:
   output:
     to:
       kind: DockerImage
-      name: 'docker-registry.default.svc:5000/di-reserv-prod/wordpress:5.0.3-php-7.0'
+      name: 'docker-registry.default.svc:5000/di-reserv-prod/wordpress:5.1.1-php-7.0'
   runPolicy: Serial
   source:
     git:
-      ref: dev
+      ref: master
       uri: git@github.com:tung-nt-niteco/s2i-wordpress.git
     sourceSecret:
       name: deploy-git
@@ -26,7 +26,7 @@ spec:
       dockerfilePath: 'Dockerfile.7.0'
       buildArgs:
         - name: 'WORDPRESS_VERSION'
-          value: '5.0.3'
+          value: '5.1.1'
         - name: 'WORDPRESS_SHA1'
-          value: 'f9a4b482288b5be7a71e9f3dc9b5b0c1f881102b'
+          value: 'f1bff89cc360bf5ef7086594e8a9b68b4cbf2192'
   triggers: []
