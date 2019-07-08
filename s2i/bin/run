@@ -70,6 +70,16 @@ if ( WP_DEBUG ) {
 }
 define( 'WP_MEMORY_LIMIT', '${WP_MEMORY_LIMIT}' );
 define( 'WP_CACHE', ${WP_CACHE} );
+
+if( WP_DEBUG ) {
+global $memcached_servers; 
+$memcached_servers = array( 
+	array( 
+		"${MEMCACHE_SERVICE_NAME}", 
+		"11211" 
+	) 
+	);
+}
 // Back-end
 define( 'WP_MAX_MEMORY_LIMIT', '${WP_MAX_MEMORY_LIMIT}' );
 //
