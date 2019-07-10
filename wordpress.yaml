@@ -33,7 +33,6 @@ objects:
   stringData:
     database-user: "${DATABASE_USER}"
     database-password: "${DATABASE_PASSWORD}"
-    database-root-password: "${DATABASE_ROOT_PASSWORD}"
     wordpress-auth-key: "${WORDPRESS_AUTH_KEY}"
     wordpress-secure-auth-key: "${WORDPRESS_SECURE_AUTH_KEY}"
     wordpress-logged-in-key: "${WORDPRESS_LOGGED_IN_KEY}"
@@ -151,7 +150,7 @@ objects:
           kind: ImageStreamTag
           name: "${NAME}:latest"
     - type: ConfigChange
-    replicas: 1
+    replicas: 2
     selector:
       name: "${NAME}"
     template:
@@ -160,10 +159,10 @@ objects:
         labels:
           name: "${NAME}"
       spec:
-#        volumes:
-#        - name: "${NAME}-data"
-#          persistentVolumeClaim:
-#            claimName: "${NAME}-wp-content"
+        volumes:
+        - name: "${NAME}-data"
+          persistentVolumeClaim:
+            claimName: "${NAME}-wp-content"
         containers:
         - name: apache-exporter
           image: bonniernews/apache_exporter:latest
@@ -177,9 +176,9 @@ objects:
           image: " "
           ports:
           - containerPort: 8080
-#          volumeMounts:
-#          - name: "${NAME}-data"
-#            mountPath: "/opt/app-root/wp-content"
+          volumeMounts:
+          - name: "${NAME}-data"
+            mountPath: "/opt/app-root/wp-content"
           readinessProbe:
             timeoutSeconds: 15
             failureThreshold: 4
@@ -289,266 +288,34 @@ objects:
             limits:
               memory: "${MEMORY_LIMIT}Mi"
 
-#- kind: PersistentVolumeClaim
-#  apiVersion: v1
-#  metadata:
-#    name: "${DATABASE_SERVICE_NAME}"
-#    labels:
-#      app: "wordpress-${NAME}"
-#  spec:
-#    accessModes:
-#    - ReadWriteOnce
-#    resources:
-#      requests:
-#        storage: "${VOLUME_CAPACITY}"
-
-#- kind: PersistentVolumeClaim
-#  apiVersion: v1
-#  metadata:
-#    name: "${NAME}-wp-content"
-#    labels:
-#      app: "wordpress-${NAME}"
-#  spec:
-#    accessModes:
-#    - ReadWriteMany
-#    resources:
-#      requests:
-#        storage: "${WORDPRESS_VOLUME_CAPACITY}"
-#    storageClassName: nfs
-
-- kind: Service
-  apiVersion: v1
-  metadata:
-    name: "${DATABASE_SERVICE_NAME}"
-    annotations:
-      description: Exposes the database server
-      prometheus.io/port: "9104"
-      prometheus.io/scrape: "true"
-
-  spec:
-    ports:
-    - name: mysql
-      port: 3306
-      targetPort: 3306
-    - name: mysql-exporter
-      port: 9104
-      targetPort: 9104
-    selector:
-      name: "${DATABASE_SERVICE_NAME}"
-
-
-- kind: DeploymentConfig
+- kind: PersistentVolumeClaim
   apiVersion: v1
   metadata:
     name: "${DATABASE_SERVICE_NAME}"
     labels:
       app: "wordpress-${NAME}"
-    annotations:
-      description: Defines how to deploy the database
-      prometheus.io/port: "9104"
-      prometheus.io/scrape: "true"
   spec:
-    strategy:
-      type: Recreate
-    triggers:
-    - type: ImageChange
-      imageChangeParams:
-        automatic: true
-        containerNames:
-        - mysql
-        from:
-          kind: ImageStreamTag
-          namespace: "openshift"
-          name: mysql:5.7
-    - type: ConfigChange
-    replicas: 1
-    selector:
-      name: "${DATABASE_SERVICE_NAME}"
-    template:
-      metadata:
-        name: "${DATABASE_SERVICE_NAME}"
-        labels:
-          name: "${DATABASE_SERVICE_NAME}"
-          app: "wordpress-${NAME}"
-      spec:
-#        volumes:
-#        - name: "${DATABASE_SERVICE_NAME}-data"
-#          persistentVolumeClaim:
-#            claimName: "${DATABASE_SERVICE_NAME}"
-        containers:
-        - name: mysql-exporter
-          image: prom/mysqld-exporter:latest
-          ports:
-          - containerPort: 9104
-            name: exporter
-          env:
-          - name: DATABASE_EXPORTER_USER
-            valueFrom:
-              secretKeyRef:
-                name: "demo"
-                key: database-user
-          - name: DATABASE_EXPORTER_PASSWORD 
-            valueFrom:
-              secretKeyRef:
-                name: "demo"
-                key: database-password	 
-          - name: DATA_SOURCE_NAME
-            value: 'root:${DATABASE_ROOT_PASSWORD}@(${DATABASE_SERVICE_NAME}:3306)/${DATABASE_NAME}'
-        - name: mysql
-          image: " "
-          ports:
-          - containerPort: 3306        
-#          volumeMounts:
-#          - name: "${DATABASE_SERVICE_NAME}-data"
-#            mountPath: "/var/lib/mysql/data"
-          readinessProbe:
-            timeoutSeconds: 1
-            initialDelaySeconds: 5
-            exec:
-              command:
-              - "/bin/sh"
-              - "-i"
-              - "-c"
-              - MYSQL_PWD='${DATABASE_PASSWORD}' mysql -h 127.0.0.1 -u ${DATABASE_USER}
-                -D ${DATABASE_NAME} -e 'SELECT 1'	     
-          livenessProbe:
-            timeoutSeconds: 1
-            initialDelaySeconds: 30
-            tcpSocket:
-              port: 3306
-          env:
-          - name: MYSQL_USER
-            valueFrom:
-              secretKeyRef:
-                name: "demo"
-                key: database-user
-          - name: MYSQL_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: "demo"
-                key: database-password
-          - name: MYSQL_ROOT_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: "demo"
-                key: database-root-password
-          - name: MYSQL_DATABASE
-            value: "${DATABASE_NAME}"
-          resources:
-            limits:
-              memory: "${MEMORY_MYSQL_LIMIT}Mi"
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: "${VOLUME_CAPACITY}"
 
-- apiVersion: v1
-  kind: ImageStream
+- kind: PersistentVolumeClaim
+  apiVersion: v1
   metadata:
-    creationTimestamp: null
+    name: "${NAME}-wp-content"
     labels:
-      app: memcached
-    name: memcached
+      app: "wordpress-${NAME}"
   spec:
-    dockerImageRepository: ""
-    tags:
-      -
-       from:
-         kind: DockerImage
-         name: memcached:${MEMCACHED_IMAGE_DOCKER_TAG}
-       name: memcached_pseudo_tag
-       importPolicy:
-         scheduled: true
-  status:
-    dockerImageRepository: ""
-- apiVersion: v1
-  kind: Service
-  metadata:
-    creationTimestamp: null
-    name: ${MEMCACHED_SERVICE_NAME}
-    prometheus.io/port: "9150"
-    prometheus.io/scrape: "true"
-  spec:
-    portalIP: ""
-    ports:
-    - name: memcached     
-      port: 11211      
-      targetPort: 11211
-    - name: memcached-exporter
-      port: 9150
-      targetPort: 9150
-    selector:
-      name: ${MEMCACHED_SERVICE_NAME}
-    sessionAffinity: None
-    type: ClusterIP
-  status:
-    loadBalancer: {}
-- apiVersion: v1
-  kind: DeploymentConfig
-  metadata:
-    creationTimestamp: null
-    name: dc-${MEMCACHED_SERVICE_NAME}
-    annotations:
-      prometheus.io/port: "9150"
-      prometheus.io/scrape: "true"
-  spec:
-    replicas: 1
-    selector:
-      name: ${MEMCACHED_SERVICE_NAME}
-    strategy:
-      type: Recreate
-    template:
-      metadata:
-        creationTimestamp: null
-        labels:
-          name: ${MEMCACHED_SERVICE_NAME}
-      spec:
-        containers:
-        - name: memcached-exporter
-          image: prom/memcached-exporter:latest
-          ports:
-          - containerPort: 9150
-            name: exporter
-          args:
-          - '--memcached.address=${MEMCACHED_SERVICE_NAME}:11211'
-        - name: cnt-memcached
-          capabilities: {}
-          image: ' '
-          imagePullPolicy: IfNotPresent
-          livenessProbe:
-            initialDelaySeconds: 5
-            tcpSocket:
-              port: 11211
-            timeoutSeconds: 1          
-          ports:
-          - containerPort: 11211
-            protocol: TCP
-          args:
-          - -m ${CACHE_SIZE}
-          readinessProbe:
-            exec:
-              command:
-              - /usr/bin/pgrep
-              - memcached
-            initialDelaySeconds: 5
-            timeoutSeconds: 1
-          resources:
-            limits:
-              memory: ${MEMORY_LIMIT}
-          securityContext:
-            capabilities: {}
-            privileged: false
-          terminationMessagePath: /dev/termination-log
-        dnsPolicy: ClusterFirst
-        restartPolicy: Always
-    triggers:
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-        - cnt-memcached
-        from:
-          kind: ImageStreamTag
-          name: memcached:memcached_pseudo_tag
-        lastTriggeredImage: ""
-      type: ImageChange
-    - type: ConfigChange
-  status: {}
+    accessModes:
+    - ReadWriteMany
+    resources:
+      requests:
+        storage: "${WORDPRESS_VOLUME_CAPACITY}"
+    storageClassName: nfs
+
+
 
 
 parameters:
@@ -579,12 +346,12 @@ parameters:
 - name: VOLUME_CAPACITY
   displayName: MySQL Volume Capacity
   description: Volume space available for MySQL data, e.g. 512Mi, 2Gi
-  value: 1Gi
+  value: 10Gi
   required: true
 - name: WORDPRESS_VOLUME_CAPACITY
   displayName: Wordpress Volume Capacity
   description: Volume space available for Wordpress data, e.g. 512Mi, 2Gi
-  value: 1Gi
+  value: 10Gi
   required: true
 - name: SOURCE_REPOSITORY_URL
   displayName: Git Repository URL
