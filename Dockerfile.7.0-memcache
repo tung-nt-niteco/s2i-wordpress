@@ -51,7 +51,7 @@ RUN update-ca-trust
 COPY ./root/ /
 
 #Add memcached file
-COPY wp-content/* /opt/app-root/wp-content
+COPY wp-content/* /opt/app-root/wp-content/
 RUN fix-permissions /opt/app-root/wp-content
 
 # Install wordpress S2I scripts
