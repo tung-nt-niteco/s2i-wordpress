@@ -282,6 +282,8 @@ objects:
             value: "${OPCACHE_MEMORY_CONSUMPTION}"
           - name: APCU_MEMORY_CONSUMPTION
             value: "${APCU_MEMORY_CONSUMPTION}"
+          - name: MEMCACHED_SERVICE_NAME
+            value: "${MEMCACHED_SERVICE_NAME}"
           resources:
             requests:
               memory: "${MEMORY_LIMIT}Mi"

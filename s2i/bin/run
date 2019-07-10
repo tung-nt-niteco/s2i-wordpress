@@ -75,7 +75,7 @@ if( WP_DEBUG ) {
 global \$memcached_servers; 
 \$memcached_servers = array( 
 	array( 
-		'${MEMCACHE_SERVICE_NAME}', 
+		"${MEMCACHED_SERVICE_NAME}", 
 		"11211" 
 	) 
 	);
