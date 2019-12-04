@@ -68,6 +68,11 @@ if ( WP_DEBUG ) {
     define( 'WP_DEBUG_LOG', true );
     define( 'WP_DEBUG_DISPLAY', false );
 }
+else
+{
+    ini_set('display_errors','Off');
+    error_reporting(E_ERROR);
+}
 define( 'WP_MEMORY_LIMIT', '${WP_MEMORY_LIMIT}' );
 define( 'WP_CACHE', ${WP_CACHE} );
 // Back-end
